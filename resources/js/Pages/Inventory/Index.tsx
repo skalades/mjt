@@ -1,0 +1,325 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Plus, Search, Box, History, Pencil, Trash2, X, Save, Printer } from 'lucide-react';
+import { useState } from 'react';
+import Modal from '@/Components/Modal';
+
+interface Props {
+    items: {
+        data: Array<{
+            id: number;
+            sku: string;
+            name: string;
+            unit: string;
+            min_stock_threshold: number;
+            total_stock?: number;
+            transactions: any[];
+        }>;
+    };
+}
+
+export default function Index({ items }: Props) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
+
+    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
+        sku: '',
+        name: '',
+        unit: 'Kg',
+        initial_stock: 0,
+        min_stock_threshold: 10,
+    });
+
+    const openCreateModal = () => {
+        setEditingItem(null);
+        reset();
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (item: any) => {
+        setEditingItem(item);
+        setData({
+            sku: item.sku,
+            name: item.name,
+            unit: item.unit,
+            initial_stock: 0, // Not used for edit
+            min_stock_threshold: item.min_stock_threshold,
+        });
+        setIsModalOpen(true);
+    };
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingItem) {
+            put(route('inventory.update', editingItem.id), {
+                onSuccess: () => closeModal(),
+            });
+        } else {
+            post(route('inventory.store'), {
+                onSuccess: () => closeModal(),
+            });
+        }
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingItem(null);
+        reset();
+    };
+
+    const deleteItem = (id: number) => {
+        if (confirm('Apakah Anda yakin ingin menghapus barang ini? RIwayat transaksi akan tetap ada.')) {
+            destroy(route('inventory.destroy', id));
+        }
+    };
+
+    return (
+        <AuthenticatedLayout
+            header={
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                        Manajemen Gudang
+                    </h2>
+                    <div className="flex gap-3">
+                        <a
+                            href={route('documents.inventory-report')}
+                            target="_blank"
+                            className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-white border-2 border-gray-100 px-6 py-3 text-sm font-bold text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
+                        >
+                            <Printer size={18} />
+                            Laporan Stok
+                        </a>
+                        <button
+                            onClick={openCreateModal}
+                            className="inline-flex items-center gap-2 rounded-2xl bg-mjt-slate px-6 py-3 text-sm font-bold text-white shadow-xl shadow-indigo-100 transition-all hover:bg-mjt-slateDark active:scale-95"
+                        >
+                            <Plus size={18} />
+                            Tambah Barang
+                        </button>
+                    </div>
+                </div>
+            }
+        >
+            <Head title="Gudang" />
+
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Stats & Search Bar */}
+                    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-4">
+                                <div className="rounded-lg bg-indigo-50 p-3 text-indigo-600">
+                                    <Box size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">Total Jenis Barang</p>
+                                    <p className="text-2xl font-bold text-gray-900">{items.data.length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Responsive Table / Card View */}
+                    <div className="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
+                        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <h3 className="text-lg font-bold text-mjt-slate">Daftar Stok Barang</h3>
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Cari SKU atau Nama..."
+                                    className="w-full rounded-xl border-gray-200 pl-10 text-sm focus:border-mjt-orange focus:ring-mjt-orange"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Desktop Table */}
+                        <div className="hidden sm:block overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50/50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                    <tr>
+                                        <th className="px-6 py-4">Barang</th>
+                                        <th className="px-6 py-4">SKU</th>
+                                        <th className="px-6 py-4">Status Stok</th>
+                                        <th className="px-6 py-4">Satuan</th>
+                                        <th className="px-6 py-4 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {items.data.map((item) => (
+                                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-gray-900 group-hover:text-mjt-orange transition-colors">{item.name}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-500 font-mono text-xs">{item.sku}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 border border-green-200 uppercase tracking-tight">
+                                                    Tersedia
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600 font-medium">{item.unit}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button 
+                                                        onClick={() => openEditModal(item)}
+                                                        className="p-2 text-gray-400 hover:text-mjt-orange hover:bg-orange-50 rounded-lg transition-all"
+                                                    >
+                                                        <Pencil size={18} />
+                                                    </button>
+                                                    <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                                        <History size={18} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => deleteItem(item.id)}
+                                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="sm:hidden divide-y divide-gray-100">
+                            {items.data.map((item) => (
+                                <div key={item.id} className="p-4 active:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h4 className="font-bold text-gray-900">{item.name}</h4>
+                                            <p className="text-[10px] font-mono text-gray-400 uppercase">{item.sku}</p>
+                                        </div>
+                                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700 border border-green-100">
+                                            AKTIF
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs mt-4">
+                                        <div className="text-gray-500">Satuan: <span className="font-bold text-gray-900">{item.unit}</span></div>
+                                        <div className="flex items-center gap-4">
+                                            <button 
+                                                onClick={() => openEditModal(item)}
+                                                className="font-bold text-mjt-orange"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button 
+                                                onClick={() => deleteItem(item.id)}
+                                                className="font-bold text-red-400"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CRUD Modal */}
+            <Modal show={isModalOpen} onClose={closeModal} maxWidth="md">
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <Box size={20} className="text-indigo-600" />
+                            {editingItem ? 'Edit Barang' : 'Tambah Barang Baru'}
+                        </h3>
+                        <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <form onSubmit={submit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">SKU / Kode Barang</label>
+                            <input
+                                type="text"
+                                value={data.sku}
+                                onChange={(e) => setData('sku', e.target.value)}
+                                className="w-full rounded-lg border-gray-200 text-sm font-mono"
+                                placeholder="MISAL: RBR-SIL-01"
+                                required
+                            />
+                            {errors.sku && <p className="mt-1 text-xs text-red-500">{errors.sku}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Nama Barang</label>
+                            <input
+                                type="text"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                className="w-full rounded-lg border-gray-200 text-sm"
+                                placeholder="Nama lengkap bahan/barang"
+                                required
+                            />
+                            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Satuan</label>
+                                <select
+                                    value={data.unit}
+                                    onChange={(e) => setData('unit', e.target.value)}
+                                    className="w-full rounded-lg border-gray-200 text-sm"
+                                >
+                                    <option value="Kg">Kg</option>
+                                    <option value="Gram">Gram</option>
+                                    <option value="Pcs">Pcs</option>
+                                    <option value="Liter">Liter</option>
+                                    <option value="Roll">Roll</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Batas Minimum</label>
+                                <input
+                                    type="number"
+                                    value={data.min_stock_threshold}
+                                    onChange={(e) => setData('min_stock_threshold', parseInt(e.target.value) || 0)}
+                                    className="w-full rounded-lg border-gray-200 text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {!editingItem && (
+                            <div className="rounded-xl bg-indigo-50 p-4 border border-indigo-100">
+                                <label className="block text-sm font-bold text-indigo-700 mb-1">Stok Awal (Opsional)</label>
+                                <input
+                                    type="number"
+                                    value={data.initial_stock}
+                                    onChange={(e) => setData('initial_stock', parseInt(e.target.value) || 0)}
+                                    className="w-full rounded-lg border-indigo-200 text-sm"
+                                    placeholder="0"
+                                />
+                                <p className="mt-1 text-[10px] text-indigo-500 italic">Input stok awal akan otomatis mencatat mutasi stok "Masuk".</p>
+                            </div>
+                        )}
+
+                        <div className="mt-8 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2 text-sm font-bold text-white shadow-md shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                <Save size={18} />
+                                {editingItem ? 'Simpan Perubahan' : 'Tambah Barang'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+        </AuthenticatedLayout>
+    );
+}
