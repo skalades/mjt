@@ -17,13 +17,8 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Admin MJT',
-            'email' => 'admin@mjt.co.id',
-            'password' => bcrypt('password'),
-        ]);
-
         $this->call([
+            AdminSeeder::class,
             InventoryItemSeeder::class,
             MoldSeeder::class,
             OrderSeeder::class,
