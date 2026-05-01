@@ -55,11 +55,6 @@
             <div class="signature-line"></div>
             <div style="font-size: 9px;">Gudang MJT</div>
         </div>
-        <div class="signature-box" style="float: left; margin-left: 5%;">
-            <div style="font-size: 10px; font-weight: bold; margin-bottom: 60px;">Pengemudi,</div>
-            <div class="signature-line"></div>
-            <div style="font-size: 9px;">(Sopir / Kurir)</div>
-        </div>
         <div class="signature-box" style="float: right;">
             <div style="font-size: 10px; font-weight: bold; margin-bottom: 60px;">Diterima Oleh,</div>
             <div class="signature-line"></div>

@@ -114,7 +114,7 @@
             <tr>
                 <td style="border: 0; padding: 0;">
                     <h1 class="company-name">{{ App\Models\Setting::get('company_name', 'Mandiri Jaya Teknik') }}</h1>
-                    <div class="company-tagline">{{ App\Models\Setting::get('company_tagline', 'Precision Plastic Injection') }}</div>
+                    <div class="company-tagline">{{ App\Models\Setting::get('company_tagline', 'Spesialis Pengolahan Karet') }}</div>
                     <div class="company-info">
                         {{ App\Models\Setting::get('company_address') }}<br>
                         Telp: {{ App\Models\Setting::get('company_phone') }} | Email: {{ App\Models\Setting::get('company_email') }}

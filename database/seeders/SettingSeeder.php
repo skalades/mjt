@@ -12,7 +12,7 @@ class SettingSeeder extends Seeder
         $settings = [
             // Company Info
             ['key' => 'company_name', 'value' => 'Mandiri Jaya Teknik', 'group' => 'company'],
-            ['key' => 'company_tagline', 'value' => 'Precision Plastic Injection & Mold Specialist', 'group' => 'company'],
+            ['key' => 'company_tagline', 'value' => 'Spesialis Pengolahan Karet', 'group' => 'company'],
             ['key' => 'company_address', 'value' => 'Jl. Industri Utama No. 45, Kawasan Industri Jababeka, Cikarang, Bekasi, Jawa Barat 17530', 'group' => 'company'],
             ['key' => 'company_phone', 'value' => '+62 21 8900 1234', 'group' => 'company'],
             ['key' => 'company_email', 'value' => 'info@mjt.co.id', 'group' => 'company'],

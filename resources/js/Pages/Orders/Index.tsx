@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Search, ShoppingBag, Clock, Eye, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import debounce from 'lodash/debounce';
 
 interface Props {
     orders: {
@@ -14,6 +16,10 @@ interface Props {
             paid_amount: number;
             due_date: string;
         }>;
+    };
+    filters: {
+        status?: string;
+        search?: string;
     };
 }
 
@@ -33,7 +39,32 @@ const paymentStatusColors: any = {
 
 import { formatIDR, formatDate } from '@/Utils/format';
 
-export default function Index({ orders }: Props) {
+export default function Index({ orders, filters }: Props) {
+    const [search, setSearch] = useState(filters.search || '');
+
+    const handleFilter = (status?: string) => {
+        router.get(route('orders.index'), 
+            { ...filters, status, page: 1 }, 
+            { preserveState: true, replace: true }
+        );
+    };
+
+    const debouncedSearch = useCallback(
+        debounce((value: string) => {
+            router.get(route('orders.index'), 
+                { ...filters, search: value, page: 1 }, 
+                { preserveState: true, replace: true }
+            );
+        }, 500),
+        [filters]
+    );
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        debouncedSearch(value);
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -58,14 +89,31 @@ export default function Index({ orders }: Props) {
                     {/* Toolbar */}
                     <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 self-start">
-                            <button className="px-6 py-2.5 text-xs font-bold bg-mjt-slate text-white rounded-xl shadow-md">Semua</button>
-                            <button className="px-6 py-2.5 text-xs font-bold text-gray-400 hover:text-mjt-slate transition-colors">Produksi</button>
-                            <button className="px-6 py-2.5 text-xs font-bold text-gray-400 hover:text-mjt-slate transition-colors">Selesai</button>
+                            <button 
+                                onClick={() => handleFilter(undefined)}
+                                className={`px-6 py-2.5 text-xs font-bold rounded-xl transition-all ${!filters.status ? 'bg-mjt-slate text-white shadow-md' : 'text-gray-400 hover:text-mjt-slate'}`}
+                            >
+                                Semua
+                            </button>
+                            <button 
+                                onClick={() => handleFilter('produksi')}
+                                className={`px-6 py-2.5 text-xs font-bold rounded-xl transition-all ${filters.status === 'produksi' ? 'bg-mjt-slate text-white shadow-md' : 'text-gray-400 hover:text-mjt-slate'}`}
+                            >
+                                Produksi
+                            </button>
+                            <button 
+                                onClick={() => handleFilter('selesai')}
+                                className={`px-6 py-2.5 text-xs font-bold rounded-xl transition-all ${filters.status === 'selesai' ? 'bg-mjt-slate text-white shadow-md' : 'text-gray-400 hover:text-mjt-slate'}`}
+                            >
+                                Selesai
+                            </button>
                         </div>
                         <div className="relative w-full sm:w-80 group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-mjt-orange transition-colors" size={20} />
                             <input
                                 type="text"
+                                value={search}
+                                onChange={handleSearchChange}
                                 placeholder="Cari No. Order / Nama Klien..."
                                 className="w-full rounded-2xl border-gray-100 bg-white py-3.5 pl-12 text-sm shadow-sm focus:border-mjt-orange focus:ring-4 focus:ring-orange-50 transition-all"
                             />

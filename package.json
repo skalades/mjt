@@ -38,9 +38,11 @@
     "dependencies": {
         "@fontsource/inter": "^5.2.8",
         "@fontsource/outfit": "^5.2.8",
+        "@types/lodash": "^4.17.24",
         "clsx": "^2.1.1",
         "esbuild": "npm:esbuild-wasm@latest",
         "framer-motion": "^12.38.0",
+        "lodash": "^4.18.1",
         "lucide-react": "^1.8.0",
         "react-hook-form": "^7.72.1",
         "tailwind-merge": "^3.5.0",

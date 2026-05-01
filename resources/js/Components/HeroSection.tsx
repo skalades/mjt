@@ -19,9 +19,9 @@ export default function HeroSection() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="mb-8 text-5xl font-extrabold tracking-tight text-white md:text-7xl lg:text-8xl"
                 >
-                    Presisi Molding untuk
+                    Spesialis Pengolahan Karet
                     <br />
-                    <span className="text-mjt-orange drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]">Keunggulan Industri</span>
+                    <span className="text-mjt-orange drop-shadow-[0_0_15px_rgba(249,115,22,0.6)]">Berbagai Bentuk & Kebutuhan</span>
                 </motion.h1>
 
                 <motion.div

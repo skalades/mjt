@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
 
     // MRP Modules
     Route::resource('inventory', InventoryController::class);
+    Route::post('/orders/{order}/payment', [OrderController::class, 'recordPayment'])->name('orders.payment');
     Route::resource('orders', OrderController::class);
     Route::resource('molds', MoldController::class);
     Route::resource('finance', FinanceController::class);

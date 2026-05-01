@@ -12,14 +12,35 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $orders = Order::with(['items', 'financeTransactions' => function($query) {
-            $query->latest()->limit(5);
-        }])->latest()->paginate(10);
+        $query = Order::with(['items', 'financeTransactions' => function($q) {
+            $q->latest()->limit(5);
+        }]);
+
+        // Filter by Status
+        if ($request->has('status')) {
+            if ($request->status === 'produksi') {
+                $query->whereIn('status', ['PRODUCTION', 'QC']);
+            } elseif ($request->status === 'selesai') {
+                $query->where('status', 'SHIPPED');
+            }
+        }
+
+        // Search by order number or client name
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('order_number', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('client_name', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Orders/Index', [
             'orders' => $orders,
+            'filters' => $request->only(['status', 'search']),
         ]);
     }
 
