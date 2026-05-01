@@ -8,6 +8,7 @@ use App\Http\Controllers\MoldController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\OrderMaterialUsageController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
     // MRP Modules
     Route::resource('inventory', InventoryController::class);
     Route::post('/orders/{order}/payment', [OrderController::class, 'recordPayment'])->name('orders.payment');
+    Route::post('/orders/{order}/material-usage', [OrderMaterialUsageController::class, 'store'])->name('orders.material-usage');
+    Route::delete('/material-usage/{usage}', [OrderMaterialUsageController::class, 'destroy'])->name('material-usage.destroy');
     Route::resource('orders', OrderController::class);
     Route::resource('molds', MoldController::class);
     Route::resource('finance', FinanceController::class);

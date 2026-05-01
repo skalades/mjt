@@ -92,7 +92,8 @@ class OrderController extends Controller
     public function show(Order $order): Response
     {
         return Inertia::render('Orders/Show', [
-            'order' => $order->load(['items', 'financeTransactions' => fn($q) => $q->latest()]),
+            'order' => $order->load(['items', 'materialUsages.inventoryItem', 'financeTransactions' => fn($q) => $q->latest()]),
+            'inventoryItems' => \App\Models\InventoryItem::all(),
         ]);
     }
 

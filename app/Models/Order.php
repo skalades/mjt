@@ -37,6 +37,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function materialUsages(): HasMany
+    {
+        return $this->hasMany(OrderMaterialUsage::class);
+    }
+
     public function productionLogs(): HasMany
     {
         return $this->hasMany(ProductionLog::class);

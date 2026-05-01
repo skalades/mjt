@@ -29,15 +29,31 @@ interface Props {
             transaction_date: string;
             reference_number: string;
         }>;
+        material_usages: Array<{
+            id: number;
+            quantity: number;
+            notes: string;
+            created_at: string;
+            inventory_item: {
+                name: string;
+                unit: string;
+            }
+        }>;
     };
+    inventoryItems: Array<{
+        id: number;
+        name: string;
+        unit: string;
+    }>;
 }
 
 import { formatIDR, formatDate } from '@/Utils/format';
 
-export default function Show({ order }: Props) {
+export default function Show({ order, inventoryItems }: Props) {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const paymentForm = useForm({
         amount: order.total_amount - order.paid_amount,
         payment_method: 'TRANSFER_MANDIRI',
         transaction_date: new Date().toISOString().split('T')[0],
@@ -46,14 +62,36 @@ export default function Show({ order }: Props) {
         notes: `Pembayaran untuk ${order.order_number}`,
     });
 
+    const materialForm = useForm({
+        inventory_item_id: '',
+        quantity: '',
+        notes: '',
+    });
+
     const submitPayment = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('orders.payment', order.id), {
+        paymentForm.post(route('orders.payment', order.id), {
             onSuccess: () => {
                 setIsPaymentModalOpen(false);
-                reset();
+                paymentForm.reset();
             },
         });
+    };
+
+    const submitMaterialUsage = (e: React.FormEvent) => {
+        e.preventDefault();
+        materialForm.post(route('orders.material-usage', order.id), {
+            onSuccess: () => {
+                setIsMaterialModalOpen(false);
+                materialForm.reset();
+            },
+        });
+    };
+
+    const deleteMaterialUsage = (id: number) => {
+        if (confirm('Apakah Anda yakin ingin menghapus catatan ini? Stok akan dikembalikan.')) {
+            useForm().delete(route('material-usage.destroy', id));
+        }
     };
 
     return (
@@ -126,6 +164,61 @@ export default function Show({ order }: Props) {
                                                 </td>
                                             </tr>
                                         </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Material Usage Section */}
+                            <div className="rounded-2xl bg-white p-8 shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                                        <Truck size={18} className="text-orange-600" />
+                                        Pemakaian Bahan Baku
+                                    </h4>
+                                    <button 
+                                        onClick={() => setIsMaterialModalOpen(true)}
+                                        className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                        <Plus size={14} />
+                                        Catat Bahan
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                            <tr>
+                                                <th className="px-4 py-3">Nama Bahan</th>
+                                                <th className="px-4 py-3 text-center">Jumlah</th>
+                                                <th className="px-4 py-3">Keterangan</th>
+                                                <th className="px-4 py-3">Tanggal</th>
+                                                <th className="px-4 py-3 text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {order.material_usages.map((usage) => (
+                                                <tr key={usage.id} className="group">
+                                                    <td className="px-4 py-4 font-medium text-gray-900">{usage.inventory_item.name}</td>
+                                                    <td className="px-4 py-4 text-center font-bold text-indigo-600">
+                                                        {usage.quantity} {usage.inventory_item.unit}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-gray-500 text-xs italic">{usage.notes || '-'}</td>
+                                                    <td className="px-4 py-4 text-gray-400 text-[10px]">{formatDate(usage.created_at)}</td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        <button 
+                                                            onClick={() => deleteMaterialUsage(usage.id)}
+                                                            className="text-gray-300 hover:text-red-500 transition-colors"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {order.material_usages.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic">Belum ada bahan baku yang dicatat untuk pesanan ini.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -257,20 +350,20 @@ export default function Show({ order }: Props) {
                                 <span className="absolute left-4 top-1/3 text-lg font-bold text-indigo-600">Rp</span>
                                 <input
                                     type="number"
-                                    value={data.amount}
-                                    onChange={(e) => setData('amount', parseInt(e.target.value) || 0)}
+                                    value={paymentForm.data.amount}
+                                    onChange={(e) => paymentForm.setData('amount', parseInt(e.target.value) || 0)}
                                     className="w-full rounded-2xl border-gray-100 bg-gray-50 py-4 pl-12 text-2xl font-bold font-mono focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500"
                                 />
                             </div>
-                            {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
+                            {paymentForm.errors.amount && <p className="mt-1 text-xs text-red-500">{paymentForm.errors.amount}</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Metode</label>
                                 <select
-                                    value={data.payment_method}
-                                    onChange={(e) => setData('payment_method', e.target.value)}
+                                    value={paymentForm.data.payment_method}
+                                    onChange={(e) => paymentForm.setData('payment_method', e.target.value)}
                                     className="w-full rounded-xl border-gray-100 text-sm font-bold py-3 focus:ring-4 focus:ring-indigo-500/10"
                                 >
                                     <option value="CASH">Tunai (Cash)</option>
@@ -284,20 +377,20 @@ export default function Show({ order }: Props) {
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Tgl Transaksi</label>
                                 <input
                                     type="date"
-                                    value={data.transaction_date}
-                                    onChange={(e) => setData('transaction_date', e.target.value)}
+                                    value={paymentForm.data.transaction_date}
+                                    onChange={(e) => paymentForm.setData('transaction_date', e.target.value)}
                                     className="w-full rounded-xl border-gray-100 text-sm font-bold py-3 focus:ring-4 focus:ring-indigo-500/10"
                                 />
                             </div>
                         </div>
 
-                        {(data.payment_method === 'CHEQUE' || data.payment_method === 'GIRO') && (
+                        {(paymentForm.data.payment_method === 'CHEQUE' || paymentForm.data.payment_method === 'GIRO') && (
                             <div className="rounded-2xl border-2 border-dashed border-indigo-100 p-5 bg-indigo-50/30">
                                 <label className="block text-xs font-bold uppercase text-indigo-600 mb-1.5 tracking-widest pl-1">Jatuh Tempo (Cek/Giro)</label>
                                 <input
                                     type="date"
-                                    value={data.maturity_date}
-                                    onChange={(e) => setData('maturity_date', e.target.value)}
+                                    value={paymentForm.data.maturity_date}
+                                    onChange={(e) => paymentForm.setData('maturity_date', e.target.value)}
                                     className="w-full rounded-xl border-indigo-200 text-sm font-bold py-3"
                                     required
                                 />
@@ -309,8 +402,8 @@ export default function Show({ order }: Props) {
                             <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Keterangan / Ref #</label>
                             <input
                                 type="text"
-                                value={data.reference_number}
-                                onChange={(e) => setData('reference_number', e.target.value)}
+                                value={paymentForm.data.reference_number}
+                                onChange={(e) => paymentForm.setData('reference_number', e.target.value)}
                                 placeholder="Contoh: Ref 8827 / No. Cek ABC"
                                 className="w-full rounded-xl border-gray-100 text-sm py-3"
                             />
@@ -319,7 +412,7 @@ export default function Show({ order }: Props) {
                         <div className="pt-6">
                             <button
                                 type="submit"
-                                disabled={processing}
+                                disabled={paymentForm.processing}
                                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-4 text-base font-bold text-white shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <Save size={20} />
@@ -329,6 +422,78 @@ export default function Show({ order }: Props) {
                     </form>
                 </div>
             </Modal>
+
+            {/* Material Usage Modal */}
+            <Modal show={isMaterialModalOpen} onClose={() => setIsMaterialModalOpen(false)} maxWidth="md">
+                <div className="p-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                            <Truck size={24} className="text-orange-600" />
+                            Catat Pemakaian Bahan
+                        </h3>
+                        <button onClick={() => setIsMaterialModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <form onSubmit={submitMaterialUsage} className="space-y-5">
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Pilih Bahan Baku</label>
+                            <select
+                                value={materialForm.data.inventory_item_id}
+                                onChange={(e) => materialForm.setData('inventory_item_id', e.target.value)}
+                                className="w-full rounded-xl border-gray-100 text-sm font-bold py-3 focus:ring-4 focus:ring-indigo-500/10"
+                                required
+                            >
+                                <option value="">-- Pilih Bahan --</option>
+                                {inventoryItems.map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name} ({item.unit})
+                                    </option>
+                                ))}
+                            </select>
+                            {materialForm.errors.inventory_item_id && <p className="mt-1 text-xs text-red-500">{materialForm.errors.inventory_item_id}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Jumlah yang Digunakan</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={materialForm.data.quantity}
+                                onChange={(e) => materialForm.setData('quantity', e.target.value)}
+                                className="w-full rounded-xl border-gray-100 text-sm font-bold py-3 focus:ring-4 focus:ring-indigo-500/10"
+                                placeholder="0.00"
+                                required
+                            />
+                            {materialForm.errors.quantity && <p className="mt-1 text-xs text-red-500">{materialForm.errors.quantity}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1.5 tracking-widest pl-1">Keterangan Tambahan</label>
+                            <textarea
+                                value={materialForm.data.notes}
+                                onChange={(e) => materialForm.setData('notes', e.target.value)}
+                                placeholder="Misal: Batch produksi pagi"
+                                className="w-full rounded-xl border-gray-100 text-sm py-3"
+                                rows={3}
+                            />
+                        </div>
+
+                        <div className="pt-6">
+                            <button
+                                type="submit"
+                                disabled={materialForm.processing}
+                                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-600 py-4 text-base font-bold text-white shadow-xl shadow-orange-100 hover:bg-orange-700 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                <Save size={20} />
+                                Simpan & Kurangi Stok
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
+
