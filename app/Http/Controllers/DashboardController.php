@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\InventoryItem;
+use App\Models\OrderMaterialUsage;
 use App\Models\FinanceTransaction;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -24,6 +25,16 @@ class DashboardController extends Controller
             ->whereMonth('transaction_date', Carbon::now()->month)
             ->whereYear('transaction_date', Carbon::now()->year)
             ->sum('amount');
+
+        // Material Cost Calculation (Total COGS)
+        $totalMaterialCost = OrderMaterialUsage::join('inventory_items', 'order_material_usages.inventory_item_id', '=', 'inventory_items.id')
+            ->selectRaw('SUM(order_material_usages.quantity * inventory_items.purchase_price) as total_cost')
+            ->value('total_cost') ?? 0;
+
+        // Net Profit Calculation
+        $totalCashIn = FinanceTransaction::where('status', 'SUCCESS')->where('type', 'IN')->sum('amount');
+        $totalCashOut = FinanceTransaction::where('status', 'SUCCESS')->where('type', 'OUT')->sum('amount');
+        $netProfit = $totalCashIn - $totalCashOut - $totalMaterialCost;
 
         // 2. Inventory Stats
         $totalItems = InventoryItem::count();
@@ -48,6 +59,7 @@ class DashboardController extends Controller
                 'low_stock_count' => $lowStockCount,
                 'balance' => (int) $balance,
                 'monthly_cash_in' => (int) $monthlyCashIn,
+                'net_profit' => (int) $netProfit,
             ]
         ]);
     }

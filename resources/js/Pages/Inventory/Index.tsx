@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Search, Box, History, Pencil, Trash2, X, Save, Printer } from 'lucide-react';
 import { useState } from 'react';
 import Modal from '@/Components/Modal';
+import { formatIDR } from '@/Utils/format';
 
 interface Props {
     items: {
@@ -11,6 +12,7 @@ interface Props {
             sku: string;
             name: string;
             unit: string;
+            purchase_price: number;
             min_stock_threshold: number;
             total_stock?: number;
             transactions: any[];
@@ -26,6 +28,7 @@ export default function Index({ items }: Props) {
         sku: '',
         name: '',
         unit: 'Kg',
+        purchase_price: 0,
         initial_stock: 0,
         min_stock_threshold: 10,
     });
@@ -42,6 +45,7 @@ export default function Index({ items }: Props) {
             sku: item.sku,
             name: item.name,
             unit: item.unit,
+            purchase_price: item.purchase_price,
             initial_stock: 0, // Not used for edit
             min_stock_threshold: item.min_stock_threshold,
         });
@@ -140,7 +144,7 @@ export default function Index({ items }: Props) {
                                     <tr>
                                         <th className="px-6 py-4">Barang</th>
                                         <th className="px-6 py-4">SKU</th>
-                                        <th className="px-6 py-4">Status Stok</th>
+                                        <th className="px-6 py-4">Harga Beli</th>
                                         <th className="px-6 py-4">Satuan</th>
                                         <th className="px-6 py-4 text-right">Aksi</th>
                                     </tr>
@@ -153,9 +157,7 @@ export default function Index({ items }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-gray-500 font-mono text-xs">{item.sku}</td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 border border-green-200 uppercase tracking-tight">
-                                                    Tersedia
-                                                </span>
+                                                <div className="font-bold text-gray-900 font-mono italic">{formatIDR(item.purchase_price)}</div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-600 font-medium">{item.unit}</td>
                                             <td className="px-6 py-4 text-right">
@@ -258,6 +260,22 @@ export default function Index({ items }: Props) {
                                 required
                             />
                             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Harga Beli per Unit</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">Rp</span>
+                                <input
+                                    type="number"
+                                    value={data.purchase_price}
+                                    onChange={(e) => setData('purchase_price', parseFloat(e.target.value) || 0)}
+                                    className="w-full rounded-lg border-gray-200 pl-10 text-sm font-mono"
+                                    placeholder="0"
+                                    required
+                                />
+                            </div>
+                            {errors.purchase_price && <p className="mt-1 text-xs text-red-500">{errors.purchase_price}</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

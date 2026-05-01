@@ -12,6 +12,7 @@ interface Props {
         low_stock_count: number;
         balance: number;
         monthly_cash_in: number;
+        net_profit: number;
     };
 }
 
@@ -83,16 +84,20 @@ export default function Dashboard({ stats }: Props) {
                         <div className="group rounded-3xl bg-white p-8 shadow-sm border border-gray-100/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="rounded-2xl bg-green-50 p-4 text-green-600 group-hover:scale-110 transition-transform">
-                                    <Wallet size={28} />
+                                    <TrendingUp size={28} />
                                 </div>
-                                <TrendingUp className="text-green-500" size={20} />
+                                <span className="text-[10px] font-black text-green-500 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 uppercase tracking-tight">
+                                    REAL-TIME PROFIT
+                                </span>
                             </div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Kas Masuk (Bulan Ini)</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Estimasi Laba Bersih</p>
                             <div className="flex flex-col gap-1 items-start">
-                                <p className="text-2xl font-black text-green-600 font-outfit tracking-tight">
-                                    {formatIDR(stats.monthly_cash_in)}
+                                <p className={`text-3xl font-black font-outfit tracking-tight ${stats.net_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {formatIDR(stats.net_profit)}
                                 </p>
-                                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Saldo: {formatIDR(stats.balance)}</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    Saldo Kas: <span className="text-mjt-slate">{formatIDR(stats.balance)}</span>
+                                </p>
                             </div>
                         </div>
                     </div>

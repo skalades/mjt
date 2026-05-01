@@ -29,6 +29,7 @@ class InventoryController extends Controller
             'sku' => 'required|string|unique:inventory_items',
             'name' => 'required|string',
             'unit' => 'required|string',
+            'purchase_price' => 'nullable|numeric|min:0',
             'initial_stock' => 'required|numeric|min:0',
             'min_stock_threshold' => 'nullable|integer',
         ]);
@@ -38,6 +39,7 @@ class InventoryController extends Controller
                 'sku' => $validated['sku'],
                 'name' => $validated['name'],
                 'unit' => $validated['unit'],
+                'purchase_price' => $validated['purchase_price'] ?? 0,
                 'min_stock_threshold' => $validated['min_stock_threshold'] ?? 10,
             ]);
 
@@ -61,6 +63,7 @@ class InventoryController extends Controller
             'sku' => "required|string|unique:inventory_items,sku,{$inventory->id}",
             'name' => 'required|string',
             'unit' => 'required|string',
+            'purchase_price' => 'nullable|numeric|min:0',
             'min_stock_threshold' => 'nullable|integer',
         ]);
 

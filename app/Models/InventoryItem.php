@@ -16,6 +16,7 @@ class InventoryItem extends Model
         'name',
         'description',
         'unit',
+        'purchase_price',
         'min_stock_threshold',
     ];
 
