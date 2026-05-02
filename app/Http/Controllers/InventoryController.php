@@ -12,14 +12,32 @@ use Inertia\Response;
 
 class InventoryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $items = InventoryItem::with(['transactions' => function($query) {
-            $query->latest()->limit(5);
-        }])->latest()->paginate(10);
+        $query = InventoryItem::select('inventory_items.*')
+            ->selectSub(function ($sub) {
+                $sub->from('inventory_transactions')
+                    ->selectRaw("COALESCE(SUM(CASE WHEN type = 'IN' THEN quantity ELSE -quantity END), 0)")
+                    ->whereColumn('inventory_transactions.inventory_item_id', 'inventory_items.id');
+            }, 'current_stock')
+            ->with(['transactions' => function($q) {
+                $q->latest()->limit(5);
+            }]);
+
+        // Server-side search
+        if ($request->has('search') && $request->search !== '') {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('sku', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        $items = $query->latest()->paginate(10)->withQueryString();
 
         return Inertia::render('Inventory/Index', [
             'items' => $items,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -77,5 +95,24 @@ class InventoryController extends Controller
         $inventory->delete();
 
         return redirect()->route('inventory.index')->with('success', 'Barang berhasil dihapus (soft delete).');
+    }
+
+    public function adjust(Request $request, InventoryItem $inventory)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:IN,OUT',
+            'quantity' => 'required|numeric|min:0.01',
+            'notes' => 'nullable|string',
+        ]);
+
+        InventoryTransaction::create([
+            'inventory_item_id' => $inventory->id,
+            'type' => $validated['type'],
+            'quantity' => $validated['quantity'],
+            'notes' => 'Penyesuaian Manual: ' . ($validated['notes'] ?? '-'),
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('inventory.index')->with('success', 'Stok berhasil diperbarui.');
     }
 }

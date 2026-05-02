@@ -27,6 +27,18 @@ class Order extends Model
         'paid_amount' => 'integer',
     ];
 
+    protected $appends = ['total_cost', 'gross_profit'];
+
+    public function getTotalCostAttribute(): float
+    {
+        return (float) $this->materialUsages()->sum('total_cost');
+    }
+
+    public function getGrossProfitAttribute(): float
+    {
+        return (float) ($this->total_amount - $this->total_cost);
+    }
+
     public function financeTransactions(): MorphMany
     {
         return $this->morphMany(FinanceTransaction::class, 'referenceable');

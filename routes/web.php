@@ -9,6 +9,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\OrderMaterialUsageController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -42,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // MRP Modules
+    Route::post('/inventory/{inventory}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
     Route::resource('inventory', InventoryController::class);
     Route::post('/orders/{order}/payment', [OrderController::class, 'recordPayment'])->name('orders.payment');
     Route::post('/orders/{order}/material-usage', [OrderMaterialUsageController::class, 'store'])->name('orders.material-usage');
@@ -49,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('orders', OrderController::class);
     Route::resource('molds', MoldController::class);
     Route::resource('finance', FinanceController::class);
+    Route::resource('products', ProductController::class);
 });
 
 require __DIR__.'/auth.php';

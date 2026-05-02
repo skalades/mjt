@@ -3,35 +3,20 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Wallet, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, X, Save, ArrowDownLeft, ArrowUpRight, Printer } from 'lucide-react';
 import { useState } from 'react';
 import Modal from '@/Components/Modal';
+import CurrencyInput from '@/Components/CurrencyInput';
+import { formatIDR, formatDate } from '@/Utils/format';
+import { FinanceTransaction, PaginatedResponse, FinanceSummary } from '@/types';
 
 interface Props {
-    transactions: {
-        data: Array<{
-            id: number;
-            type: string;
-            category: string;
-            amount: number;
-            payment_method: string;
-            status: string;
-            maturity_date?: string;
-            reference_number?: string;
-            notes?: string;
-            transaction_date: string;
-        }>;
-    };
-    stats: {
-        total_balance: number;
-        pending_giro: number;
-    };
+    transactions: PaginatedResponse<FinanceTransaction>;
+    stats: FinanceSummary;
 }
 
-const statusIcons: any = {
+const statusIcons: Record<string, JSX.Element> = {
     SUCCESS: <CheckCircle2 className="text-green-500" size={16} />,
     PENDING: <Clock className="text-orange-500" size={16} />,
     REJECTED: <XCircle className="text-red-500" size={16} />,
 };
-
-import { formatIDR, formatDate } from '@/Utils/format';
 
 export default function Index({ transactions, stats }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -264,20 +249,16 @@ export default function Index({ transactions, stats }: Props) {
                                     )}
                                 </select>
                             </div>
-                            <div className="space-y-2">
-                                <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 ml-1">Nominal Transaksi (Rp)</label>
-                                <div className="relative group">
-                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-gray-300">Rp</span>
-                                    <input
-                                        type="number"
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 ml-1">Nominal Transaksi (Rp)</label>
+                                    <CurrencyInput
                                         value={data.amount}
-                                        onChange={(e) => setData('amount', parseInt(e.target.value) || 0)}
-                                        className="w-full rounded-2xl border-gray-100 bg-gray-50/50 py-4 pl-12 pr-5 text-xl font-black font-outfit text-mjt-slateDark focus:ring-4 focus:ring-mjt-orange/10 focus:border-mjt-orange transition-all"
+                                        onChange={(val) => setData('amount', val)}
+                                        className="w-full rounded-2xl border-gray-100 bg-gray-50/50 py-4 pr-5 text-xl font-black font-outfit text-mjt-slateDark focus:ring-4 focus:ring-mjt-orange/10 focus:border-mjt-orange transition-all"
                                         placeholder="0"
                                     />
+                                    {errors.amount && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errors.amount}</p>}
                                 </div>
-                                {errors.amount && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errors.amount}</p>}
-                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

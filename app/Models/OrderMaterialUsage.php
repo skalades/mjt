@@ -11,6 +11,8 @@ class OrderMaterialUsage extends Model
         'order_id',
         'inventory_item_id',
         'quantity',
+        'unit_cost',
+        'total_cost',
         'notes',
         'created_by',
     ];

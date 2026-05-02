@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             InventoryItemSeeder::class,
+            ProductSeeder::class,
             MoldSeeder::class,
             OrderSeeder::class,
             FinanceSeeder::class,

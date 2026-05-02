@@ -1,19 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ShoppingBag, Box, Wallet, TrendingUp } from 'lucide-react';
+import { ShoppingBag, Box, Wallet, TrendingUp, DollarSign } from 'lucide-react';
 
 import { formatIDR } from '@/Utils/format';
+import { DashboardStats } from '@/types';
 
 interface Props {
-    stats: {
-        total_orders: number;
-        orders_today: number;
-        total_items: number;
-        low_stock_count: number;
-        balance: number;
-        monthly_cash_in: number;
-        net_profit: number;
-    };
+    stats: DashboardStats;
 }
 
 export default function Dashboard({ stats }: Props) {
@@ -87,7 +80,7 @@ export default function Dashboard({ stats }: Props) {
                                     <TrendingUp size={28} />
                                 </div>
                                 <span className="text-[10px] font-black text-green-500 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 uppercase tracking-tight">
-                                    REAL-TIME PROFIT
+                                    NET PROFIT
                                 </span>
                             </div>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Estimasi Laba Bersih</p>
@@ -99,6 +92,33 @@ export default function Dashboard({ stats }: Props) {
                                     Saldo Kas: <span className="text-mjt-slate">{formatIDR(stats.balance)}</span>
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Financial Breakdown */}
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Total Tagihan (Revenue)</p>
+                            <p className="text-xl font-black text-mjt-slate font-outfit">{formatIDR(stats.revenue)}</p>
+                            <p className="text-[9px] font-bold text-indigo-500 mt-1 uppercase tracking-tighter">Bulan ini: {formatIDR(stats.monthly_revenue)}</p>
+                        </div>
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                                <DollarSign size={14} className="text-orange-500" />
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Biaya Bahan (COGS)</p>
+                            </div>
+                            <p className="text-xl font-black text-orange-600 font-outfit">{formatIDR(stats.material_cost)}</p>
+                            <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Dari pemakaian bahan baku</p>
+                        </div>
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Laba Kotor (Gross Profit)</p>
+                            <p className="text-xl font-black text-mjt-orange font-outfit">{formatIDR(stats.gross_profit)}</p>
+                            <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Revenue − COGS</p>
+                        </div>
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Beban Operasional</p>
+                            <p className="text-xl font-black text-red-500 font-outfit">{formatIDR(stats.expenses)}</p>
+                            <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Diluar biaya bahan baku</p>
                         </div>
                     </div>
 
@@ -130,6 +150,3 @@ export default function Dashboard({ stats }: Props) {
         </AuthenticatedLayout>
     );
 }
-
-
-

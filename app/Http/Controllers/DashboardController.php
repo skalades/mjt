@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\InventoryItem;
+use App\Models\InventoryTransaction;
 use App\Models\OrderMaterialUsage;
 use App\Models\FinanceTransaction;
 use Illuminate\Support\Facades\DB;
@@ -15,37 +16,45 @@ class DashboardController extends Controller
 {
     public function index(): Response
     {
-        // 1. Finance Stats
+        // 1. Finance Stats — Cash Balance (verified transactions only)
         $balance = FinanceTransaction::where('status', 'SUCCESS')
             ->selectRaw("SUM(CASE WHEN type = 'IN' THEN amount ELSE -amount END) as total")
             ->value('total') ?? 0;
 
-        $monthlyCashIn = FinanceTransaction::where('status', 'SUCCESS')
-            ->where('type', 'IN')
-            ->whereMonth('transaction_date', Carbon::now()->month)
-            ->whereYear('transaction_date', Carbon::now()->year)
+        // Revenue (Total Order Values, excluding cancelled)
+        $totalRevenue = Order::where('status', '!=', 'CANCELLED')->sum('total_amount');
+
+        // Material Cost (COGS) — from actual material usage records
+        $totalMaterialCost = OrderMaterialUsage::sum('total_cost') ?? 0;
+
+        // Operational Expenses — EXCLUDE material purchases to avoid double counting
+        // Material cost is already tracked via OrderMaterialUsage (COGS)
+        $totalExpenses = FinanceTransaction::where('status', 'SUCCESS')
+            ->where('type', 'OUT')
+            ->where('category', '!=', 'MATERIAL_PURCHASE')
             ->sum('amount');
 
-        // Material Cost Calculation (Total COGS)
-        $totalMaterialCost = OrderMaterialUsage::join('inventory_items', 'order_material_usages.inventory_item_id', '=', 'inventory_items.id')
-            ->selectRaw('SUM(order_material_usages.quantity * inventory_items.purchase_price) as total_cost')
-            ->value('total_cost') ?? 0;
+        $grossProfit = $totalRevenue - $totalMaterialCost;
+        $netProfit = $grossProfit - $totalExpenses;
 
-        // Net Profit Calculation
-        $totalCashIn = FinanceTransaction::where('status', 'SUCCESS')->where('type', 'IN')->sum('amount');
-        $totalCashOut = FinanceTransaction::where('status', 'SUCCESS')->where('type', 'OUT')->sum('amount');
-        $netProfit = $totalCashIn - $totalCashOut - $totalMaterialCost;
+        // Monthly Stats
+        $monthlyRevenue = Order::where('status', '!=', 'CANCELLED')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->sum('total_amount');
 
         // 2. Inventory Stats
         $totalItems = InventoryItem::count();
-        
-        // Calculate low stock items
-        // Since we don't have a current_stock column, we sum the transactions
-        $lowStockCount = InventoryItem::where(function($query) {
-            $query->selectRaw("SUM(CASE WHEN type = 'IN' THEN quantity ELSE -quantity END)")
-                ->from('inventory_transactions')
-                ->whereColumn('inventory_item_id', 'inventory_items.id');
-        }, '<=', DB::raw('min_stock_threshold'))->count();
+
+        // Low stock count — SQLite-compatible raw query
+        $lowStockCount = DB::table('inventory_items')
+            ->whereNull('deleted_at')
+            ->whereRaw('(
+                SELECT COALESCE(SUM(CASE WHEN type = \'IN\' THEN quantity ELSE -quantity END), 0)
+                FROM inventory_transactions
+                WHERE inventory_transactions.inventory_item_id = inventory_items.id
+            ) <= min_stock_threshold')
+            ->count();
 
         // 3. Order Stats
         $totalOrders = Order::count();
@@ -58,8 +67,12 @@ class DashboardController extends Controller
                 'total_items' => $totalItems,
                 'low_stock_count' => $lowStockCount,
                 'balance' => (int) $balance,
-                'monthly_cash_in' => (int) $monthlyCashIn,
+                'revenue' => (int) $totalRevenue,
+                'monthly_revenue' => (int) $monthlyRevenue,
+                'material_cost' => (int) $totalMaterialCost,
+                'gross_profit' => (int) $grossProfit,
                 'net_profit' => (int) $netProfit,
+                'expenses' => (int) $totalExpenses,
             ]
         ]);
     }

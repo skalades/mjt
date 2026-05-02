@@ -46,6 +46,12 @@ export default function Authenticated({
                                     Pesanan
                                 </NavLink>
                                 <NavLink
+                                    href={route('products.index')}
+                                    active={route().current('products.*')}
+                                >
+                                    Katalog
+                                </NavLink>
+                                <NavLink
                                     href={route('finance.index')}
                                     active={route().current('finance.*')}
                                 >
@@ -165,6 +171,12 @@ export default function Authenticated({
                             active={route().current('orders.*')}
                         >
                             Pesanan
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('products.index')}
+                            active={route().current('products.*')}
+                        >
+                            Katalog
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('finance.index')}

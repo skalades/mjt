@@ -1,29 +1,20 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Search, ShoppingBag, Clock, Eye, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, ShoppingBag, Clock, Eye, AlertCircle } from 'lucide-react';
+import { useState, useCallback } from 'react';
 import debounce from 'lodash/debounce';
+import { formatIDR, formatDate } from '@/Utils/format';
+import { Order, PaginatedResponse } from '@/types';
 
 interface Props {
-    orders: {
-        data: Array<{
-            id: number;
-            order_number: string;
-            client_name: string;
-            status: string;
-            payment_status: string;
-            total_amount: number;
-            paid_amount: number;
-            due_date: string;
-        }>;
-    };
+    orders: PaginatedResponse<Order>;
     filters: {
         status?: string;
         search?: string;
     };
 }
 
-const statusColors: any = {
+const statusColors: Record<string, string> = {
     DRAFT: 'text-gray-600 bg-gray-50 border-gray-200',
     PRODUCTION: 'text-orange-700 bg-orange-50 border-orange-200',
     QC: 'text-indigo-700 bg-indigo-50 border-indigo-200',
@@ -31,13 +22,11 @@ const statusColors: any = {
     CANCELLED: 'text-red-700 bg-red-50 border-red-200',
 };
 
-const paymentStatusColors: any = {
+const paymentStatusColors: Record<string, string> = {
     UNPAID: 'text-red-600 bg-red-50 border-red-100',
     PARTIAL: 'text-orange-600 bg-orange-50 border-orange-100',
     PAID: 'text-green-600 bg-green-50 border-green-100',
 };
-
-import { formatIDR, formatDate } from '@/Utils/format';
 
 export default function Index({ orders, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
@@ -145,13 +134,13 @@ export default function Index({ orders, filters }: Props) {
                                             </td>
                                             <td className="px-8 py-6 font-bold text-gray-600">{order.client_name}</td>
                                             <td className="px-8 py-6">
-                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black border uppercase tracking-wider ${statusColors[order.status]}`}>
+                                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black border uppercase tracking-wider ${statusColors[order.status] || ''}`}>
                                                     {order.status}
                                                 </span>
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex flex-col gap-1.5">
-                                                    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-black border uppercase tracking-tight w-fit ${paymentStatusColors[order.payment_status]}`}>
+                                                    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-black border uppercase tracking-tight w-fit ${paymentStatusColors[order.payment_status] || ''}`}>
                                                         {order.payment_status}
                                                     </span>
                                                     <div className="text-[10px] font-bold text-mjt-orange font-mono">
@@ -187,13 +176,13 @@ export default function Index({ orders, filters }: Props) {
                                             <h4 className="font-black text-mjt-slate uppercase tracking-tight font-outfit text-base">{order.order_number}</h4>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{order.client_name}</p>
                                         </div>
-                                        <span className={`text-[9px] font-black border px-2 py-0.5 rounded-full uppercase ${statusColors[order.status]}`}>
+                                        <span className={`text-[9px] font-black border px-2 py-0.5 rounded-full uppercase ${statusColors[order.status] || ''}`}>
                                             {order.status}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between text-[10px] font-bold">
                                         <div className="flex items-center gap-3">
-                                            <span className={`border px-2 py-1 rounded-lg uppercase tracking-tight ${paymentStatusColors[order.payment_status]}`}>
+                                            <span className={`border px-2 py-1 rounded-lg uppercase tracking-tight ${paymentStatusColors[order.payment_status] || ''}`}>
                                                 {order.payment_status}
                                             </span>
                                             <span className="text-mjt-orange font-mono text-sm">{formatIDR(order.total_amount)}</span>
@@ -219,4 +208,3 @@ export default function Index({ orders, filters }: Props) {
         </AuthenticatedLayout>
     );
 }
-

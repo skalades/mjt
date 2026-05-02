@@ -20,9 +20,19 @@ class InventoryItem extends Model
         'min_stock_threshold',
     ];
 
+    protected $casts = [
+        'purchase_price' => 'decimal:2',
+        'min_stock_threshold' => 'integer',
+    ];
+
     public function transactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class);
+    }
+
+    public function materialUsages(): HasMany
+    {
+        return $this->hasMany(OrderMaterialUsage::class);
     }
 
     public function documents(): MorphMany
